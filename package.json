@@ -1,7 +1,7 @@
 {
   "name": "telegram-backend",
-  "version": "3.0.0",
-  "description": "Telegram Files API with CORS fix",
+  "version": "4.0.0",
+  "description": "Telegram Files API - WORKING VERSION",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -19,7 +19,8 @@
     "telegram",
     "api",
     "files",
-    "cors-fixed"
+    "cors",
+    "working"
   ],
   "author": "anonedu",
   "license": "MIT"
