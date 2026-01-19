@@ -3,11 +3,8 @@ const axios = require('axios');
 const cors = require('cors');
 const app = express();
 
-// CORS - Allow frontend
-app.use(cors({
-    origin: ['https://anonedu.github.io', 'http://localhost:3000'],
-    credentials: false
-}));
+// ✅ FIXED: ALLOW ALL ORIGINS (Temporary fix)
+app.use(cors()); // This allows ALL origins - frontend will work
 
 app.use(express.json());
 
@@ -22,20 +19,33 @@ app.get('/', (req, res) => {
                 body { font-family: Arial; padding: 40px; max-width: 800px; margin: 0 auto; }
                 .channel { background: #f5f5f5; padding: 15px; margin: 10px 0; border-radius: 10px; }
                 a { color: #007bff; text-decoration: none; }
+                .cors-info { background: #d4edda; padding: 10px; border-radius: 5px; margin: 10px 0; }
             </style>
         </head>
         <body>
             <h1>✅ Telegram Files API</h1>
+            
+            <div class="cors-info">
+                <strong>CORS Status:</strong> All origins allowed
+            </div>
+            
+            <p>Channel: <strong>@Anon271999</strong></p>
             <p>Channel ID: <code>-1003585777964</code></p>
             
             <div class="channel">
                 <h3>📡 Available Endpoints:</h3>
-                <p><a href="/api/test">/api/test</a> - API Status</p>
-                <p><a href="/api/files">/api/files?channel=@Anon271999</a> - Get Files</p>
-                <p><a href="/api/channel-info">/api/channel-info</a> - Channel Details</p>
+                <p><a href="/api/test" target="_blank">GET /api/test</a> - API Status</p>
+                <p><a href="/api/files" target="_blank">GET /api/files</a> - Get Files</p>
+                <p><a href="/api/channel-info" target="_blank">GET /api/channel-info</a> - Channel Details</p>
             </div>
             
-            <p>Bot: @StorageAjit_bot | Channel: @Anon271999</p>
+            <div class="channel">
+                <h3>🔗 Test Links:</h3>
+                <p><a href="https://anonedu.github.io/telegram-frontend/" target="_blank">Frontend Website</a></p>
+                <p>Backend URL: <code>https://telegram-backend-rq82.vercel.app</code></p>
+            </div>
+            
+            <p>Bot: @StorageAjit_bot | CORS: Enabled for all</p>
         </body>
         </html>
     `);
@@ -48,6 +58,8 @@ app.get('/api/test', (req, res) => {
         service: 'Telegram Files API',
         channel_id: '-1003585777964',
         channel_username: '@Anon271999',
+        cors_enabled: true,
+        allowed_origins: 'all',
         timestamp: new Date().toISOString()
     });
 });
@@ -55,20 +67,26 @@ app.get('/api/test', (req, res) => {
 // Channel info
 app.get('/api/channel-info', async (req, res) => {
     try {
-        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8363811390:AAH-gAn9hOy4vrXOP7XHuM1LoHMHS77h6Fs';
+        
         const response = await axios.get(
             `https://api.telegram.org/bot${BOT_TOKEN}/getChat`,
-            { params: { chat_id: '@Anon271999' } }
+            { 
+                params: { chat_id: '@Anon271999' },
+                timeout: 10000
+            }
         );
         
         res.json({
             success: true,
-            channel: response.data.result
+            channel: response.data.result,
+            cors: 'enabled'
         });
     } catch (error) {
         res.json({
             success: false,
-            error: error.message
+            error: error.message,
+            cors: 'enabled'
         });
     }
 });
@@ -78,19 +96,14 @@ app.get('/api/files', async (req, res) => {
     try {
         let channel = req.query.channel || '@Anon271999';
         
-        // Convert username to ID if needed
+        // Convert username to ID
         if (channel === '@Anon271999') {
             channel = '-1003585777964';
         }
         
-        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN;
+        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8363811390:AAH-gAn9hOy4vrXOP7XHuM1LoHMHS77h6Fs';
         
-        if (!BOT_TOKEN) {
-            return res.json({
-                success: false,
-                error: 'Bot token not configured'
-            });
-        }
+        console.log(`📥 Fetching files for channel: ${channel}`);
 
         // Get channel messages
         const response = await axios.get(
@@ -104,6 +117,8 @@ app.get('/api/files', async (req, res) => {
             }
         );
 
+        console.log(`📊 Telegram response OK: ${response.data.ok}`);
+        
         const files = [];
         if (response.data.ok && response.data.result) {
             for (const msg of response.data.result) {
@@ -129,7 +144,10 @@ app.get('/api/files', async (req, res) => {
                         try {
                             const fileRes = await axios.get(
                                 `https://api.telegram.org/bot${BOT_TOKEN}/getFile`,
-                                { params: { file_id: fileData.file_id } }
+                                { 
+                                    params: { file_id: fileData.file_id },
+                                    timeout: 5000
+                                }
                             );
                             
                             if (fileRes.data.ok) {
@@ -145,27 +163,74 @@ app.get('/api/files', async (req, res) => {
                                 });
                             }
                         } catch (error) {
-                            // Skip file if error
+                            console.log(`⚠️ File error: ${error.message}`);
                         }
                     }
                 }
             }
         }
 
+        console.log(`✅ Found ${files.length} files`);
+        
         res.json({
             success: true,
             channel: '@Anon271999',
             channel_id: '-1003585777964',
             total_files: files.length,
-            files: files
+            files: files,
+            cors: 'enabled',
+            timestamp: new Date().toISOString()
         });
         
     } catch (error) {
+        console.error('❌ API Error:', error.message);
+        
         res.json({
             success: false,
             error: error.message,
+            hint: 'Check bot token and channel permissions',
             channel: '@Anon271999',
-            channel_id: '-1003585777964'
+            channel_id: '-1003585777964',
+            cors: 'enabled'
+        });
+    }
+});
+
+// Health check
+app.get('/health', (req, res) => {
+    res.json({
+        status: 'healthy',
+        cors: 'enabled',
+        timestamp: new Date().toISOString()
+    });
+});
+
+// Direct file test endpoint
+app.get('/api/test-files', async (req, res) => {
+    try {
+        const BOT_TOKEN = process.env.TELEGRAM_BOT_TOKEN || '8363811390:AAH-gAn9hOy4vrXOP7XHuM1LoHMHS77h6Fs';
+        
+        const response = await axios.get(
+            `https://api.telegram.org/bot${BOT_TOKEN}/getChatHistory`,
+            {
+                params: {
+                    chat_id: '-1003585777964',
+                    limit: 5
+                }
+            }
+        );
+        
+        res.json({
+            test: true,
+            channel_accessible: response.data.ok,
+            message_count: response.data.result ? response.data.result.length : 0,
+            cors: 'enabled'
+        });
+    } catch (error) {
+        res.json({
+            test: false,
+            error: error.message,
+            cors: 'enabled'
         });
     }
 });
@@ -173,9 +238,14 @@ app.get('/api/files', async (req, res) => {
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
     console.log(`
-    ✅ Server started on port ${PORT}
-    📍 Channel: @Anon271999
-    🔢 Channel ID: -1003585777964
-    🚀 API Ready!
+    🚀 Telegram Files API Started
+    📍 Port: ${PORT}
+    🌐 URL: https://telegram-backend-rq82.vercel.app
+    🔓 CORS: Enabled for ALL origins
+    📡 Channel: @Anon271999 (ID: -1003585777964)
+    🤖 Bot: @StorageAjit_bot
+    ✅ Ready to serve!
     `);
 });
+
+module.exports = app;
