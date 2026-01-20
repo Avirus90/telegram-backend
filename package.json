@@ -1,7 +1,7 @@
 {
-  "name": "telegram-backend",
-  "version": "4.0.0",
-  "description": "Telegram Files API - WORKING VERSION",
+  "name": "telegram-backend-direct-view",
+  "version": "5.0.0",
+  "description": "Telegram Files API with Direct Viewing",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -19,8 +19,10 @@
     "telegram",
     "api",
     "files",
-    "cors",
-    "working"
+    "viewer",
+    "pdf",
+    "video",
+    "image"
   ],
   "author": "anonedu",
   "license": "MIT"
