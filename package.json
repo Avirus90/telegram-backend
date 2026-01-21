@@ -1,7 +1,7 @@
 {
-  "name": "telegram-backend-direct-view",
-  "version": "5.0.0",
-  "description": "Telegram Files API with Direct Viewing",
+  "name": "telegram-backend-private-channel",
+  "version": "5.1.0",
+  "description": "Telegram Files API for Private Channel with Direct Viewing",
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
@@ -17,12 +17,10 @@
   },
   "keywords": [
     "telegram",
+    "private-channel",
     "api",
     "files",
-    "viewer",
-    "pdf",
-    "video",
-    "image"
+    "viewer"
   ],
   "author": "anonedu",
   "license": "MIT"
